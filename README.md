@@ -72,11 +72,35 @@ version = "x.x.x"
 number = "+48xxxxxxxxx"
 
 os.system("cd /tmp ; git clone https://github.com/AsamK/signal-cli.git")
-os.system("cd /tmp/signal-cli/data ; cp org.asamk.Signal.conf /etc/dbus-1/system.d/ ; cp org.asamk.Signal.service /usr/share/dbus-1/sy>os.system("""sed -i -e "s|%dir%|/opt/signal-cli-""" + version + """/|" -e "s|%number%|""" + number + """|" /etc/systemd/system/signal->
+os.system("cd /tmp/signal-cli/data ; cp org.asamk.Signal.conf /etc/dbus-1/system.d/ ; cp org.asamk.Signal.service /usr/share/dbus-1/system-services/ ; cp signal-cli.service /etc/systemd/system/")
 os.system("""sed -i -e 's|policy user="signal-cli"|policy user="pi"|' /etc/dbus-1/system.d/org.asamk.Signal.conf""")
 os.system("""sed -i -e 's|User=signal-cli|User=pi|' /etc/systemd/system/signal-cli.service""")
 os.system("""sed -i -e "s|ExecStart=%dir%/bin/signal-cli --config /var/lib/signal-cli daemon --system|ExecStart=/opt/signal-cli-""" + version + """//bin/signal-cli -u """ + number + """ daemon --system|" /etc/systemd/system/signal-cli.service""")
 ```
+
+etc/systemd/system/signal-cli.service should look like below
+
+```nano
+[Unit]
+Description=Send secure messages to Signal clients
+Requires=dbus.socket
+After=dbus.socket
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=dbus
+Environment="SIGNAL_CLI_OPTS=-Xms2m"
+ExecStart=/opt/signal-cli-0.11.7//bin/signal-cli -u +48xxxxxxxxx daemon --system
+User=pi
+BusName=org.asamk.Signal
+# JVM always exits with 143 in reaction to SIGTERM signal
+SuccessExitStatus=143
+
+[Install]
+Alias=dbus-org.asamk.Signal.service
+```
+
 
 try sending a message using dbus
 
