@@ -14,6 +14,56 @@ sudo tar xf signal-cli-x.x.x-Linux.tar -C /opt
 sudo ln -sf /opt/signal-cli-x.x.x/bin/signal-cli /usr/local/bin/
 ```
 
+## Compilation/Installation bash script
+
+```ssh
+#!/bin/bash
+
+echo 'Downloading Signal-CLI'
+VER=$(curl --silent -qI  https://github.com/AsamK/signal-cli/releases/latest | awk -F '/' '/^location/ {print  substr($NF, 1, length($NF)-1)}'); \
+wget https://github.com/AsamK/signal-cli/releases//download/$VER/signal-cli-${VER#v}.tar.gz
+
+echo 'creating directory signal-${VER#v}'
+mkdir signal-${VER#v}
+
+echo 'extracting signal-cli-${VER#v}.tar.gz to signal-${VER#v} directory'
+tar xf signal-cli-${VER#v}.tar.gz -C signal-${VER#v}/
+
+echo 'Getting libsignal-client version'
+LIBVER=$(find signal-${VER#v}/signal-cli-${VER#v}/lib -name 'libsignal-client-*.jar' | grep -Eo '[0-9]+\.[0-9]+\.[0.9]')
+
+echo downlaoding cooresponding libsignal_v$LIBVER
+wget https://github.com/exquo/signal-libs-build/releases/download/libsignal_v$LIBVER/libsignal_jni.so-v$LIBVER-aarch64-unknown-linux-gnu.tar.gz
+
+echo extracting libsignal_jni.so-v$LIBVER-aarch64-unknown-linux-gnu.tar.gz to signal-${VER#v} directory
+tar xf libsignal_jni.so-v$LIBVER-aarch64-unknown-linux-gnu.tar.gz -C signal-${VER#v}/
+
+echo updating libsignal_jni.so file in libsignal-client-$LIBVER.jar
+jar -uf signal-${VER#v}/signal-cli-${VER#v}/lib/libsignal-client-$LIBVER.jar -C signal-${VER#v} libsignal_jni.so
+
+echo creating signal-cli-${VER#v}.tar from signal-${VER#v}/signal-cli-${VER#v} directory
+tar -C signal-${VER#v} -cvf signal-cli-${VER#v}.tar signal-cli-${VER#v}
+
+echo extracting signal-cli-${VER#v}.tar to /opt dir
+sudo tar xf signal-cli-${VER#v}.tar -C /opt
+
+echo linking /opt/signal-cli-${VER#v}/bin/signal-cli to /usr/local/bin/ directory
+sudo ln -sf /opt/signal-cli-${VER#v}/bin/signal-cli /usr/local/bin/
+
+
+echo removing signal-${VER#v} directory
+rm -rf signal-${VER#v}
+
+echo removing signal-cli-${VER#v}.tar.gz
+rm -rf signal-cli-${VER#v}.tar.gz
+
+echo removing libsignal_jni.so-v$LIBVER-aarch64-unknown-linux-gnu.tar.gz
+rm -rf libsignal_jni.so-v$LIBVER-aarch64-unknown-linux-gnu.tar.gz
+
+echo signal-CLI version $VER
+
+```
+
 ## Usage
 
 For a complete usage overview please read
